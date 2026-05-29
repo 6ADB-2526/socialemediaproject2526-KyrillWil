@@ -1,0 +1,533 @@
+/* Globale containerinstellingen */
+.discord-layout {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  background-color: #313338;
+  color: #dbdee1;
+  overflow: hidden;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+/* SIDEBAR (LINKERKOLOM) */
+.sidebar {
+  width: 240px;
+  background-color: #2b2d31;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  height: 100%;
+}
+
+.sidebar-content {
+  flex: 1;
+  padding: 10px 8px;
+  overflow-y: auto;
+}
+
+.nav-item,
+.user-item {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 2px;
+  color: #949ba4;
+  font-size: 14px;
+}
+
+.nav-item .icon {
+  margin-right: 12px;
+  font-size: 16px;
+}
+
+.nav-item.active,
+.user-item.active {
+  background-color: #404249;
+  color: #fff;
+}
+
+.nav-item:hover,
+.user-item:hover {
+  background-color: #35373c;
+  color: #dbdee1;
+}
+
+.dm-header {
+  font-size: 11px;
+  font-weight: 700;
+  color: #949ba4;
+  padding: 18px 8px 8px;
+  display: flex;
+  justify-content: space-between;
+  letter-spacing: 0.5px;
+}
+
+/* AVATARS EN STATUSDOTS */
+.avatar {
+  width: 32px;
+  height: 32px;
+  background-color: #5865f2;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  color: white;
+  font-weight: bold;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.avatar.small {
+  width: 32px;
+  height: 32px;
+  font-size: 14px;
+}
+
+.status-dot {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid #2b2d31;
+}
+
+.online {
+  background-color: #23a55a;
+}
+
+/* USER PANEL ONDER SIDEBAR */
+.user-panel {
+  height: 52px;
+  background: #232428;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.user-panel-left {
+  display: flex;
+  align-items: center;
+}
+
+.user-meta .name {
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+}
+
+.user-meta .status {
+  font-size: 11px;
+  color: #949ba4;
+}
+
+.logout-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 4px;
+}
+
+/* RECHTERSCHERM HOOFD-LAYOUT */
+.main-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #313338;
+  height: 100%;
+}
+
+.top-bar {
+  height: 48px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+  background-color: #313338;
+  flex-shrink: 0;
+}
+
+/* CHAT EN BERICHTEN STROOM */
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+.at {
+  color: #80848e;
+  font-size: 20px;
+  margin-right: 8px;
+  font-weight: 600;
+}
+
+.title {
+  font-weight: 600;
+  color: white;
+  font-size: 15px;
+}
+
+.messages-flow {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 0;
+}
+
+.messages-inner {
+  display: flex;
+  flex-direction: column;
+}
+
+.discord-message {
+  display: flex;
+  padding: 8px 16px;
+  position: relative;
+}
+
+.discord-message:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+.message-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #5865f2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  margin-right: 16px;
+  flex-shrink: 0;
+}
+
+.message-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.message-header {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+
+.message-user {
+  color: white;
+  font-weight: 500;
+  margin-right: 8px;
+  font-size: 15px;
+}
+
+.message-timestamp {
+  color: #949ba4;
+  font-size: 0.75rem;
+}
+
+.message-text {
+  color: #dbdee1;
+  line-height: 1.375rem;
+  font-size: 15px;
+}
+
+/* CHAT INVOERVELD */
+.message-input-form {
+  padding: 0 16px 24px;
+  background-color: #313338;
+  flex-shrink: 0;
+}
+
+.input-wrapper {
+  background-color: #383a40;
+  border-radius: 8px;
+  padding: 11px 16px;
+}
+
+.input-wrapper input {
+  width: 100%;
+  background: none;
+  border: none;
+  color: #dbdee1;
+  outline: none;
+  font-size: 15px;
+}
+
+/* FRIENDS HOOFDSCHERM */
+.friends-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-left .icon {
+  font-size: 18px;
+  margin-right: 4px;
+}
+
+.v-divider {
+  width: 1px;
+  height: 24px;
+  background: #3f4147;
+  margin: 0 8px;
+}
+
+.add-btn {
+  background: #248046;
+  color: white;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  margin-left: 8px;
+}
+
+.friends-content {
+  padding: 16px 30px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.search-bar-wrap {
+  margin-bottom: 20px;
+}
+
+.friends-search {
+  width: 100%;
+  background: #1e1f22;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  outline: none;
+}
+
+.status-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #949ba4;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+}
+
+.friend-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 8px;
+  border-top: 1px solid #3f4147;
+  border-radius: 8px;
+  margin-bottom: 2px;
+}
+
+.friend-item:hover {
+  background-color: rgba(79, 84, 92, 0.16);
+}
+
+.f-info {
+  display: flex;
+  align-items: center;
+}
+
+.f-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.f-name {
+  font-weight: 600;
+  color: white;
+  font-size: 14px;
+}
+
+.f-status {
+  font-size: 12px;
+  color: #949ba4;
+}
+
+.f-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.circle-btn {
+  width: 36px;
+  height: 36px;
+  background: #2b2d31;
+  border: none;
+  border-radius: 50%;
+  color: #b5bac1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.circle-btn:hover {
+  color: #fff;
+  background-color: #1e1f22;
+}
+
+/* RODE HOVER VOOR HET KRUISJE BIJ VERWIJDEREN */
+.circle-btn.remove-btn-x:hover {
+  background-color: #da373c;
+  color: white;
+}
+
+/* KEBAB DROPDOWN EN EDITING IN CHAT */
+.message-options {
+  position: absolute;
+  right: 16px;
+  top: 8px;
+  display: none;
+}
+
+.discord-message:hover .message-options {
+  display: block;
+}
+
+.kebab-btn {
+  background-color: #313338;
+  border: 1px solid #1e1f22;
+  border-radius: 4px;
+  color: #b5bac1;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+
+.message-dropdown {
+  position: absolute;
+  right: 0;
+  top: 26px;
+  background-color: #111214;
+  border-radius: 4px;
+  width: 160px;
+  padding: 6px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.24);
+  z-index: 100;
+}
+
+.dropdown-item {
+  background: none;
+  border: none;
+  text-align: left;
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 13px;
+  color: #dbdee1;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.dropdown-item:hover {
+  background-color: #4752c4;
+  color: #fff;
+}
+
+.dropdown-item.delete:hover {
+  background-color: #da373c;
+}
+
+.edit-container {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.edit-input {
+  width: 100%;
+  background-color: #383a40;
+  border: none;
+  border-radius: 8px;
+  padding: 10px;
+  color: #dbdee1;
+  outline: none;
+  font-size: 15px;
+}
+
+.edit-help {
+  font-size: 11px;
+  margin-top: 4px;
+  color: #949ba4;
+}
+
+.edit-help .link {
+  color: #00a8fc;
+  cursor: pointer;
+}
+
+/* Styling voor de navigatie-links bovenin */
+.tab-link {
+  background: none;
+  border: none;
+  color: #949ba4;
+  padding: 4px 8px;
+  margin: 0 4px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.tab-link:hover {
+  background-color: #35373c;
+  color: #dbdee1;
+}
+
+.tab-link.active {
+  color: #ffffff;
+  background-color: #404249;
+}
+
+/* De rode/oranje notificatie-badge naast Pending */
+.badge {
+  background-color: #f23f43;
+  color: white;
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-weight: bold;
+  margin-left: 4px;
+}
+
+/* Groene hover-gloed voor de acceptatie-knop */
+.circle-btn.accept-btn-v:hover {
+  background-color: #248046;
+  color: white;
+}
+
+/* Tekst voor als de lijst leeg is */
+.empty-state {
+  color: #949ba4;
+  font-size: 14px;
+  text-align: center;
+  padding: 4px 0;
+}
+
+.friend-item.pending-item {
+  cursor: default;
+}
