@@ -3,6 +3,7 @@ const db = require("../data/db"); // Ensure the path to your database connection
 
 // 1. Get friend list
 exports.getFriends = async (req, res) => {
+  // een vraag kan zijn wat gebeurd er als ik req en res omwissel (kijk one note)
   const { userId } = req.params;
   try {
     const [rows] = await db.execute(
@@ -11,11 +12,12 @@ exports.getFriends = async (req, res) => {
        JOIN users u ON (f.user_id = u.id OR f.friend_id = u.id)
        WHERE (f.user_id = ? OR f.friend_id = ?) 
          AND f.status = 'accepted' 
-         AND u.id != ?`,
+         AND u.id != ?`, //dit is sql code, word niet gevraagd
       [userId, userId, userId],
     );
     res.status(200).json(rows);
   } catch (err) {
+    //als er een fout is bij je server crashed het veilig
     res.status(500).json({ error: err.message });
   }
 };

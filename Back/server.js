@@ -1,7 +1,7 @@
-// server.js
-const express = require("express");
-const cors = require("cors");
-require("dotenv").config(); // Laadt omgevingsvariabelen uit het .env bestand
+// server.js is verantwoordelijk voor het opstarten van de server
+const express = require("express"); //zorgt voor je code voor de server anders moet je heel veel code schrijven voor een simpele server
+const cors = require("cors"); //zorgt dat als je frontend toestemming vraagt aan je backend het het krijgt(beveiliging)
+require("dotenv").config(); // beveiliging van je wachtwoord om je server te verbinden met je databank
 
 const app = express();
 
@@ -15,7 +15,7 @@ const friendsRouter = require("./routes/friendsRouter");
 const messageRouter = require("./routes/messageRouter");
 
 // === 3. Koppel Routes (Endpoints) ===
-app.use("/api/auth", authRouter); // Routes voor registratie en inloggen
+app.use("/api/auth", authRouter); // Routes voor registratie en inloggen, je api/auth is wat je invoert om ernaar te serven
 app.use("/api/friends", friendsRouter); // Vriendenlijst, verzoeken verzenden/accepteren/weigeren
 app.use("/api/messages", messageRouter); // Berichten (versturen, ophalen, bewerken, verwijderen)
 

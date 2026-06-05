@@ -9,3 +9,5 @@ const db = mysql.createPool({
 });
 
 module.exports = db.promise(); // .promise() zorgt ervoor dat we moderne code (async/await) kunnen gebruiken
+
+//dit zorgt voor de verbinding met je databank

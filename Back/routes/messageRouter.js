@@ -1,7 +1,7 @@
 const express = require("express");
-// We starten de mini-router van Express op om specifieke wegen (routes) aan te maken
+
 const router = express.Router();
-// We importeren de 'messageController'. Dat is de map met de échte logica en database-acties voor berichten
+
 const messageController = require("../controllers/messageController");
 
 // --- BERICHTEN ROUTES KOPPELEN (De wegbewijzers) ---
