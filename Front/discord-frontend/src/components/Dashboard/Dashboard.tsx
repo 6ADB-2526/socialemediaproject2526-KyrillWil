@@ -25,11 +25,16 @@ const Dashboard = ({ user, onLogout }: any) => {
   //einde use states
 
   // useRef wordt gebruikt om direct naar de onderkant van de chat te scrollen bij nieuwe berichten
+  //het is een reference naar een element, zorgt voor specifieke controle over een bepaald element
+  //messagesendref is oftewel een null of een html element, maar omdat de dom nog niet aangemaakt is kan het geen element zijn dus om geen error te krijgen plaats je oftwel null of element ussen <> en je zegt tussen () dat de begin waarde null is. Bij de volgende code zeg je dat messagesendref de current is en de current is een html element dus dan is het geen null meer
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
-  // Functie om de scrollpositie naar beneden te dwingen
+  // Functie om de scrollpositie naar beneden te dwingen in een chat naar de typ balk
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+    //
+    //current? is waar het staat, current is normaal null maar met ? zeg je als current niet null is doe dan scrollIntoView
+    //scrollintoview is standaard browser functie die naar messagesEndRef scrollt zie hierboven wat het is
   };
 
   // Zodra chatHistory verandert (nieuw bericht), scroll naar beneden
@@ -42,11 +47,13 @@ const Dashboard = ({ user, onLogout }: any) => {
     try {
       const friendsRes = await api.get(`/friends/${user.id}`);
       setFriends(friendsRes.data);
+      //dus je kijkt naar de route friends en kijkt naar de ids van de vrienden die je hebt en setFriends is de useState versie van de variabele friends waar de waarde veranderd kan worden, en je stopt de data die je hebt gekregen van friendsRes erin
 
-      const pendingRes = await api.get(`/friends/pending/${user.id}`);
+      const pendingRes = await api.get(`/friends/pending/${user.id}`); // je gebruikt backticks ` om variabelen te vragen en met backticks is het properder dan accolades "" want dan moet je + user.id doen en niet ${}
       setPendingRequests(pendingRes.data);
     } catch (err) {
       console.error("Fout bij ophalen vrienden/verzoeken", err);
+      //catch is er als er een fout is bv. bij het opvragen van iets en de server stuurt een fout terug, zonder catch bevriest jou pagina maar met catch kan je de fout zien met alle info dat is de err en je kunt een message in console sturen met alle info
     }
   };
 
@@ -59,19 +66,24 @@ const Dashboard = ({ user, onLogout }: any) => {
   useEffect(() => {
     const fetchData = () => {
       // Alleen chatgeschiedenis ophalen als we in een chat zitten en niet aan het bewerken zijn
+      // als er een gebruiker is en je edit niet dus het is null dan gebeurt de volgende code
       if (selectedUser && editingId === null) {
         api
           .get(`/messages/${user.id}/${selectedUser.id}`)
           .then((res) => setChatHistory(res.data))
           .catch(() => console.log("Chat kon niet geladen worden"));
+        //dan haalt het alle berichten tussen jij en die geselecteerde gebruker daarna stuurt hij een responde naar de state setChatHistory en die waarde veranderd naar alle data van die get en bij een fout heb je catch om te zien wat er fout liep
       }
       loadFriendsAndRequests();
+      //Het is een aparte functie die jouw "zijbalk" of je "vriendenlijst" up-to-date houdt.
     };
 
     fetchData(); // Direct uitvoeren
-    const interval = setInterval(fetchData, 4000); // Herhalen, refreshed de data die in fetchData is na 4000milisceonden dus 4seconden
+    const interval = setInterval(fetchData, 4000); // setInterval is een ingebouwde js funtie die zegt voer deze functie uit om de zoveel seconden.
+    // Je refreshed de data die in fetchData is na 4000milisceonden dus 4seconden
     return () => clearInterval(interval); // Opruimen bij stoppen
-  }, [selectedUser, user.id, editingId]); //het staat daar om deze 3 in de gaten te houden als het veranderd dan moet useEffect het op de achtergrond aanpassen
+  }, [selectedUser, user.id, editingId]); //het staat daar om deze 3 in de gaten te houden als er minstens een veranderd dan moet useEffect het op de achtergrond aanpassen
+  // useEffect luisterd eigenlijk of hetgene wat het moet in de gaten geven dus hier deze 3 dingen, als ze veranderen moet het de functie uitvoeren
 
   // --- FUNCTIES VOOR ACTIES ---
 
@@ -203,9 +215,10 @@ const Dashboard = ({ user, onLogout }: any) => {
             <span>DIRECT MESSAGES</span>
           </div>
           {friends.map((f: any) => (
+            //map gaat kijken naar alles in je friends en deze gaat in f en if kan any zijn en het gaat voor al die dingen in friends dus je vrienden hetgene hieronde maken
             <div
-              key={f.id}
-              className={`user-item ${selectedUser?.id === f.id ? "active" : ""}`}
+              key={f.id} //id
+              className={`user-item ${selectedUser?.id === f.id ? "active" : ""}`} //zorgt voor verschillende styling bij active en niks
               onClick={() => setSelectedUser(f)}
             >
               <div className="avatar">
@@ -213,7 +226,7 @@ const Dashboard = ({ user, onLogout }: any) => {
                 <div className="status-dot online"></div>
               </div>
               <span className="username">{f.username}</span>
-            </div>
+            </div> // dit is je avatar van de vriend, je neem de eerste letter van de username dus met [0] en doet er een hooefdletter van met toUpperCase en dat word de avatar
           ))}
         </div>
 
