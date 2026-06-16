@@ -1,5 +1,5 @@
 import { useState } from "react";
-// We importeren de drie losse schermen (bouwblokken) die we eerder hebben gemaakt
+// We importeren de drie losse schermen (bouwblokken) je componenten die we eerder hebben gemaakt
 import Login from "./components/Login/Login";
 import Register from "./components/Register/Register";
 import Dashboard from "./components/Dashboard/Dashboard";
@@ -17,6 +17,8 @@ function App() {
   // 'view' onthoudt welk formulier we moeten laten zien als er nog NIEMAND is ingelogd.
   // Dit kan "login" zijn (inlogscherm) of "register" (registratiescherm). We starten op "login".
   const [view, setView] = useState<"login" | "register">("login");
+  //setView is een funcite, view heeft waarde zelf in setView is er om die waarde te veranderen
+  // je moet altijd de soort aangeven bij state dus je zegt dat state je login of register kan zijn en je kiest voor login
 
   // --- SCHERM-CONTROLE 1: Welke grote pagina laten we zien? ---
 
@@ -27,6 +29,7 @@ function App() {
     // Als de gebruiker in het dashboard op de uitlogknop klikt, zetten we 'user' weer op 'null' (niks).
     // Omdat het geheugen dan verandert, springt de app direct weer terug naar de inlogpagina!
     return <Dashboard user={user} onLogout={() => setUser(null)} />;
+    //de user is een object van interface van dashboard die je de value geeft die in user zit en als de object onLogout de setUser gelijk is aan null dan ben je uitgelogd dit gebeurt als je op de uitlog knop klikt in dashboard
   }
 
   // --- SCHERM-CONTROLE 2: Welk formulier tonen we als je NIET bent ingelogd? ---
@@ -37,6 +40,7 @@ function App() {
     <div className="auth-wrapper">
       {/* Vraag aan het geheugen: Is de huidige view gelijk aan "login"? */}
       {view === "login" ? (
+        //(? is gwn een if else)
         // JA: Laat het Login-scherm zien!
         // We geven 'setUser' mee aan 'onLoginSuccess'. Dus als het inloggen in dat scherm lukt,
         // vult hij hier in App.tsx de 'user' state, waardoor we naar het Dashboard schieten.

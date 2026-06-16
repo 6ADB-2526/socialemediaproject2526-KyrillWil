@@ -4,6 +4,7 @@ import api from "../../api/axiosInstance";
 // Importeer de bijbehorende CSS-bestanden
 import "./Dashboard.css";
 
+//alle states die je gebruikt in je dashboard
 // Het Dashboard-component is het hoofdvenster na het inloggen
 const Dashboard = ({ user, onLogout }: any) => {
   // --- STATES: Het geheugen van het component ---
@@ -20,6 +21,8 @@ const Dashboard = ({ user, onLogout }: any) => {
   const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editValue, setEditValue] = useState("");
+
+  //einde use states
 
   // useRef wordt gebruikt om direct naar de onderkant van de chat te scrollen bij nieuwe berichten
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
@@ -47,7 +50,7 @@ const Dashboard = ({ user, onLogout }: any) => {
     }
   };
 
-  // Eerste keer laden bij mounten
+  // Eerste keer laden bij mounten, alle gegevens geladen van de gebruiker met die user id en deze word bij andere functies geplaatst want deze moet soms refreshen of geupdate worden
   useEffect(() => {
     loadFriendsAndRequests();
   }, [user.id]);
@@ -66,26 +69,29 @@ const Dashboard = ({ user, onLogout }: any) => {
     };
 
     fetchData(); // Direct uitvoeren
-    const interval = setInterval(fetchData, 4000); // Herhalen
+    const interval = setInterval(fetchData, 4000); // Herhalen, refreshed de data die in fetchData is na 4000milisceonden dus 4seconden
     return () => clearInterval(interval); // Opruimen bij stoppen
-  }, [selectedUser, user.id, editingId]);
+  }, [selectedUser, user.id, editingId]); //het staat daar om deze 3 in de gaten te houden als het veranderd dan moet useEffect het op de achtergrond aanpassen
 
   // --- FUNCTIES VOOR ACTIES ---
 
   // Vriend toevoegen via gebruikersnaam
   const handleAddFriend = async () => {
+    //window.promt is ingebouwd in browser dus niet zelf geschreven
     const friendUsername = window.prompt(
       "Geef de gebruikersnaam van je vriend:",
     );
     if (!friendUsername || !friendUsername.trim()) return;
 
     try {
+      // /friends/add is surft naar je route of endpoint
       const res = await api.post("/friends/add", {
+        //je stuurt eerst je eigen id en dan de persoon waarmee je vrienden wilt worden
         userId: user.id,
         friendUsername: friendUsername.trim(),
       });
       alert(res.data.message);
-      loadFriendsAndRequests();
+      loadFriendsAndRequests(); //het heeft net een actie uitgevoerd dus het vraagt om de info hier te refreshen en de meest recente info te krijgen
     } catch (err: any) {
       alert(err.response?.data?.error || "Er is iets misgegaan.");
     }
@@ -97,8 +103,8 @@ const Dashboard = ({ user, onLogout }: any) => {
       return;
     try {
       await api.delete(`/friends/${user.id}/${friendId}`);
-      setFriends((prev) => prev.filter((f) => f.id !== friendId));
-      if (selectedUser?.id === friendId) setSelectedUser(null);
+      setFriends((prev) => prev.filter((f) => f.id !== friendId)); //prev(previous) is de huidige waarde van je state of tewel hetgene voordat je op de knop klikte om iets aan te passen
+      if (selectedUser?.id === friendId) setSelectedUser(null); // de ? zegt als het null is dat het undifiend is anders crashed het, het kijkt hier naar de gene die je hebt verwijderd en veranderd de selecteduser naar 0 en dat zorgt dat de chats met die persoon gesloten worden
     } catch (err) {
       console.error("Verwijderen mislukt:", err);
     }
@@ -108,7 +114,7 @@ const Dashboard = ({ user, onLogout }: any) => {
   const acceptRequest = async (friendshipId: number) => {
     try {
       await api.put(`/friends/accept/${friendshipId}`);
-      loadFriendsAndRequests();
+      loadFriendsAndRequests(); // loadfriendandreq eigenlijk laat dat alle data van de database in of alleen je vrienden die je hebt en de vriendschapverzoeken die je krijgt, zonder dit ga je de oude dingen zien en refreshed het niet
     } catch (err) {
       console.error("Accepteren mislukt", err);
     }
@@ -118,8 +124,8 @@ const Dashboard = ({ user, onLogout }: any) => {
   const declineRequest = async (friendshipId: number) => {
     try {
       await api.delete(`/friends/decline/${friendshipId}`);
-      setPendingRequests((prev) =>
-        prev.filter((r) => r.friendship_id !== friendshipId),
+      setPendingRequests(
+        (prev) => prev.filter((r) => r.friendship_id !== friendshipId), //Dit is de "selectie-check". Je zegt: "Houd alle verzoeken in de lijst, BEHALVE degene waarvan het ID gelijk is aan het ID dat we net hebben afgewezen."
       );
     } catch (err) {
       console.error("Weigeren mislukt", err);
@@ -141,7 +147,8 @@ const Dashboard = ({ user, onLogout }: any) => {
   const saveEdit = async (id: number) => {
     const trimmedValue = editValue.trim();
     if (!trimmedValue) {
-      setEditingId(null);
+      //! betekent als het false is maar je vergelijkt het hier met niks dus het kijkt of het null of leeg is
+      setEditingId(null); //annuleert de edit omdat het null of leeg is zelfs met trim want trim doet de spaties weg en als je dan niks hebt
       return;
     }
     try {
@@ -151,7 +158,7 @@ const Dashboard = ({ user, onLogout }: any) => {
           m.id === id ? { ...m, message_text: trimmedValue } : m,
         ),
       );
-      setEditingId(null);
+      setEditingId(null); //tijdens het editen is het 1 en na het opslaan is het terug 0
     } catch (err) {
       console.error("Bewerken mislukt");
     }
@@ -159,16 +166,17 @@ const Dashboard = ({ user, onLogout }: any) => {
 
   // Nieuw bericht verzenden
   const sendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!message.trim() || !selectedUser) return;
+    e.preventDefault(); //zorgt dat je na enter klikt de pagina niet automatisch refreshed
+    if (!message.trim() || !selectedUser) return; // ! is als het bericht leeg is stopt de functie of als de selected user leeg is dus gene meer geselecteerd dan stopt het ook
     try {
       const res = await api.post("/messages", {
+        //hier zegt het dat het iets wilt sturen/posten en daaronder geeft het de gegevens naar wie het wilt sturen en wat
         sender_id: user.id,
         receiver_id: selectedUser.id,
         message_text: message,
       });
-      setChatHistory((prev) => [...prev, res.data]);
-      setMessage(""); // Inputveld leegmaken
+      setChatHistory((prev) => [...prev, res.data]); //je haalt alles uit de vorige chatHistory en spread het uit en je voegt je nieuwe bericht dus je res.data eraan toe. Jij ziet hier de code verschijnen maar de gebruiker ziet het verschijnen door het te refreshen maar omdat ik een polling gebruik met een int erval die om de 4 seconden refreshed ziet hij het zonder te refreshen
+      setMessage(""); // Inputveld weer leegmaken
     } catch (err) {
       console.error("Verzenden mislukt");
     }
