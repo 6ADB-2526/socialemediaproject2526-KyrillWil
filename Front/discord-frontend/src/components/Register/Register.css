@@ -84,3 +84,21 @@ button:active {
 .switch-text span:hover {
   text-decoration: underline;
 }
+
+.suggestions {
+  margin-top: 10px;
+  padding: 10px;
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+.suggestions button {
+  margin: 5px;
+  padding: 5px 10px;
+  cursor: pointer;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 3px;
+}

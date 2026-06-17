@@ -6,5 +6,6 @@ const authController = require("../controllers/authController"); // Importeert d
 // Definieert de routes voor registratie en inloggen
 router.post("/register", authController.registerUser); //post is data versturen/doorgeven, je geeft nieuwe data aan je databank want er word een nieuwe gebruiker gecreërd dus je geeft username en w8woord
 router.post("/login", authController.loginUser);
+router.get("/check-username/:username", authController.checkUsername);
 
 module.exports = router; // Exporteert de router voor gebruik in server.js

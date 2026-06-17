@@ -6,13 +6,12 @@ const bcrypt = require("bcryptjs");
 exports.registerUser = async (req, res) => {
   let { username, email, password } = req.body;
 
-  // Basisvalidatie
   if (!username || !email || !password) {
     return res.status(400).json({ error: "Please fill in all fields." });
   }
 
   try {
-    // 1. Controleren of het e-mailadres al bestaat
+    // Controleren of het e-mailadres al bestaat
     const [existingEmail] = await db.execute(
       "SELECT id FROM users WHERE email = ?",
       [email],
@@ -23,32 +22,27 @@ exports.registerUser = async (req, res) => {
         .json({ error: "This email address is already in use." });
     }
 
-    // 2. LOGICA: Controleren of username bestaat en nummeren
+    // LOGICA: Unieke gebruikersnaam genereren
     let finalUsername = username;
     let counter = 2;
 
-    // Blijf checken zolang de naam in gebruik is
     while (true) {
       const [existingUser] = await db.execute(
         "SELECT id FROM users WHERE username = ?",
         [finalUsername],
       );
-
-      // Als de lengte 0 is, betekent dit dat de naam vrij is
       if (existingUser.length === 0) {
-        break;
+        break; // Naam is vrij
       }
-
-      // Naam is bezet, maak er "Naam2", "Naam3", enz. van
       finalUsername = `${username}${counter}`;
       counter++;
     }
 
-    // 3. Wachtwoord veilig versleutelen
+    // Wachtwoord hashen
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // 4. Gebruiker opslaan met de definitieve (eventueel aangepaste) naam
+    // Gebruiker opslaan in de database
     await db.execute(
       "INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
       [finalUsername, email, hashedPassword],
@@ -66,42 +60,54 @@ exports.registerUser = async (req, res) => {
   }
 };
 
-// === 2. Inloggen van een bestaande gebruiker ===
+// === 2. Inloggen ===
 exports.loginUser = async (req, res) => {
   const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({ error: "Fill in the email and password." });
-  }
+  if (!email || !password)
+    return res.status(400).json({ error: "Fill in all fields." });
 
   try {
     const [users] = await db.execute("SELECT * FROM users WHERE email = ?", [
       email,
     ]);
-    if (users.length === 0) {
-      return res
-        .status(401)
-        .json({ error: "Incorrect email address or password." });
-    }
+    if (users.length === 0)
+      return res.status(401).json({ error: "Incorrect email or password." });
 
     const user = users[0];
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res
-        .status(401)
-        .json({ error: "Incorrect email address or password." });
-    }
+    if (!isMatch)
+      return res.status(401).json({ error: "Incorrect email or password." });
 
     return res.status(200).json({
       message: "Successfully logged in!",
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-      },
+      user: { id: user.id, username: user.username, email: user.email },
     });
   } catch (err) {
-    console.error("Error during login:", err);
-    return res.status(500).json({ error: "Server error during login." });
+    return res.status(500).json({ error: "Server error." });
+  }
+};
+
+// === 3. Check of gebruikersnaam beschikbaar is (voor de frontend suggesties) ===
+exports.checkUsername = async (req, res) => {
+  const { username } = req.params;
+
+  try {
+    const [existingUser] = await db.execute(
+      "SELECT id FROM users WHERE username = ?",
+      [username],
+    );
+
+    if (existingUser.length > 0) {
+      // Naam is bezet: stuur suggesties terug
+      return res.status(200).json({
+        available: false,
+        suggestions: [`${username}123`, `${username}_pro`, `user_${username}`],
+      });
+    }
+
+    // Naam is vrij
+    return res.status(200).json({ available: true });
+  } catch (err) {
+    return res.status(500).json({ error: "Server error during check." });
   }
 };
