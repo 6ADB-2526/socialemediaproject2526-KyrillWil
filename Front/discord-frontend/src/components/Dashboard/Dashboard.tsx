@@ -88,7 +88,6 @@ const Dashboard = ({ user, onLogout }: any) => {
     try {
       await api.delete(`/friends/${user.id}/${friendId}`);
       setFriends((prev) => prev.filter((f) => f.id !== friendId));
-      alert("Vriend verwijderd. De chat blijft in je zijbalk staan.");
     } catch (err) {
       console.error("Verwijderen mislukt:", err);
     }
@@ -111,35 +110,6 @@ const Dashboard = ({ user, onLogout }: any) => {
       );
     } catch (err) {
       console.error("Weigeren mislukt", err);
-    }
-  };
-
-  const deleteMessage = async (id: number) => {
-    try {
-      await api.delete(`/messages/${id}`);
-      setChatHistory((prev) => prev.filter((m: any) => m.id !== id));
-      setActiveMenuId(null);
-    } catch (err) {
-      console.error("Verwijderen mislukt");
-    }
-  };
-
-  const saveEdit = async (id: number) => {
-    const trimmedValue = editValue.trim();
-    if (!trimmedValue) {
-      setEditingId(null);
-      return;
-    }
-    try {
-      await api.put(`/messages/${id}`, { message_text: trimmedValue });
-      setChatHistory((prev) =>
-        prev.map((m: any) =>
-          m.id === id ? { ...m, message_text: trimmedValue } : m,
-        ),
-      );
-      setEditingId(null);
-    } catch (err) {
-      console.error("Bewerken mislukt");
     }
   };
 
@@ -187,7 +157,7 @@ const Dashboard = ({ user, onLogout }: any) => {
               onClick={() => setSelectedUser(f)}
             >
               <div className="avatar">
-                {f.username[0].toUpperCase()}
+                {f.username.charAt(0).toUpperCase()}
                 <div className="status-dot online"></div>
               </div>
               <span className="username">{f.username}</span>
@@ -196,7 +166,9 @@ const Dashboard = ({ user, onLogout }: any) => {
         </div>
         <div className="user-panel">
           <div className="user-panel-left">
-            <div className="avatar small">{user.username[0].toUpperCase()}</div>
+            <div className="avatar small">
+              {user.username.charAt(0).toUpperCase()}
+            </div>
             <div className="user-meta">
               <div className="name">{user.username}</div>
               <div className="status">Online</div>
@@ -221,8 +193,8 @@ const Dashboard = ({ user, onLogout }: any) => {
                   <div key={m.id} className="discord-message">
                     <div className="message-avatar">
                       {m.sender_id === user.id
-                        ? user.username[0].toUpperCase()
-                        : selectedUser.username[0].toUpperCase()}
+                        ? user.username.charAt(0).toUpperCase()
+                        : selectedUser.username.charAt(0).toUpperCase()}
                     </div>
                     <div className="message-content">
                       <div className="message-header">
@@ -231,65 +203,9 @@ const Dashboard = ({ user, onLogout }: any) => {
                             ? user.username
                             : selectedUser.username}
                         </span>
-                        <span className="message-timestamp">
-                          {new Date(m.created_at).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </span>
                       </div>
-                      {editingId === m.id ? (
-                        <div className="edit-container">
-                          <input
-                            autoFocus
-                            className="edit-input"
-                            value={editValue}
-                            onChange={(e) => setEditValue(e.target.value)}
-                            onKeyDown={(e: any) => {
-                              if (e.key === "Enter") saveEdit(m.id);
-                              if (e.key === "Escape") setEditingId(null);
-                            }}
-                          />
-                        </div>
-                      ) : (
-                        <div className="message-text">{m.message_text}</div>
-                      )}
+                      <div className="message-text">{m.message_text}</div>
                     </div>
-                    {m.sender_id === user.id && !editingId && (
-                      <div className="message-options">
-                        <button
-                          className="kebab-btn"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveMenuId(
-                              activeMenuId === m.id ? null : m.id,
-                            );
-                          }}
-                        >
-                          ⋮
-                        </button>
-                        {activeMenuId === m.id && (
-                          <div className="message-dropdown">
-                            <button
-                              className="dropdown-item"
-                              onMouseDown={() => {
-                                setEditingId(m.id);
-                                setEditValue(m.message_text);
-                                setActiveMenuId(null);
-                              }}
-                            >
-                              Edit Message
-                            </button>
-                            <button
-                              className="dropdown-item delete"
-                              onMouseDown={() => deleteMessage(m.id)}
-                            >
-                              Delete Message
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
                   </div>
                 ))}
                 <div ref={messagesEndRef} />
@@ -302,7 +218,7 @@ const Dashboard = ({ user, onLogout }: any) => {
                   placeholder={
                     isFriend
                       ? `Message @${selectedUser.username}`
-                      : "Je bent geen vriend meer; sturen niet mogelijk."
+                      : "You are no longer a friend; sending is not possible."
                   }
                   value={isFriend ? message : ""}
                   onChange={(e) => setMessage(e.target.value)}
@@ -339,81 +255,75 @@ const Dashboard = ({ user, onLogout }: any) => {
             </header>
             <div className="friends-content">
               {activeTab === "online" ? (
-                <>
-                  <div className="status-label">FRIENDS — {friends.length}</div>
-                  <div className="list">
-                    {friends.map((f: any) => (
-                      <div
-                        key={f.id}
-                        className="friend-item"
-                        onClick={() => setSelectedUser(f)}
-                      >
-                        <div className="f-info">
-                          <div className="avatar">
-                            {f.username[0].toUpperCase()}
-                          </div>
-                          <div className="f-text">
-                            <div className="f-name">{f.username}</div>
-                          </div>
+                <div className="list">
+                  {friends.map((f: any) => (
+                    <div
+                      key={f.id}
+                      className="friend-item"
+                      onClick={() => setSelectedUser(f)}
+                    >
+                      <div className="f-info">
+                        <div className="avatar">
+                          {f.username.charAt(0).toUpperCase()}
+                          <div className="status-dot online"></div>
                         </div>
-                        <div
-                          className="f-actions"
-                          onClick={(e) => e.stopPropagation()}
+                        <div className="f-text">
+                          <div className="f-name">{f.username}</div>
+                          <div className="f-status">Online</div>
+                        </div>
+                      </div>
+                      <div
+                        className="f-actions"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <button
+                          className="circle-btn"
+                          onClick={() => setSelectedUser(f)}
                         >
-                          <button
-                            className="circle-btn"
-                            onClick={() => setSelectedUser(f)}
-                          >
-                            💬
-                          </button>
-                          <button
-                            className="circle-btn remove-btn-x"
-                            onClick={() => removeFriend(f.id)}
-                          >
-                            ❌
-                          </button>
-                        </div>
+                          💬
+                        </button>
+                        <button
+                          className="circle-btn remove-btn-x"
+                          onClick={() => removeFriend(f.id)}
+                        >
+                          ❌
+                        </button>
                       </div>
-                    ))}
-                  </div>
-                </>
+                    </div>
+                  ))}
+                </div>
               ) : (
-                <>
-                  <div className="status-label">
-                    PENDING REQUESTS — {pendingRequests.length}
-                  </div>
-                  <div className="list">
-                    {pendingRequests.map((r: any) => (
-                      <div
-                        key={r.friendship_id}
-                        className="friend-item pending-item"
-                      >
-                        <div className="f-info">
-                          <div className="avatar">
-                            {r.username[0].toUpperCase()}
-                          </div>
-                          <div className="f-text">
-                            <div className="f-name">{r.username}</div>
-                          </div>
+                <div className="list">
+                  {pendingRequests.map((r: any) => (
+                    <div
+                      key={r.friendship_id}
+                      className="friend-item pending-item"
+                    >
+                      <div className="f-info">
+                        <div className="avatar">
+                          {r.username.charAt(0).toUpperCase()}
                         </div>
-                        <div className="f-actions">
-                          <button
-                            className="circle-btn accept-btn-v"
-                            onClick={() => acceptRequest(r.friendship_id)}
-                          >
-                            ✅
-                          </button>
-                          <button
-                            className="circle-btn remove-btn-x"
-                            onClick={() => declineRequest(r.friendship_id)}
-                          >
-                            ❌
-                          </button>
+                        <div className="f-text">
+                          <div className="f-name">{r.username}</div>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </>
+                      <div className="f-actions">
+                        <button
+                          className="circle-btn accept-btn-v"
+                          onClick={() => acceptRequest(r.friendship_id)}
+                        >
+                          ✅
+                        </button>
+                        <button
+                          className="circle-btn remove-btn-x"
+                          onClick={() => declineRequest(r.friendship_id)}
+                        >
+                          ❌
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>
