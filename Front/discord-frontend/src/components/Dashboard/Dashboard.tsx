@@ -5,7 +5,6 @@ import "./Dashboard.css";
 const Dashboard = ({ user, onLogout }: any) => {
   const [friends, setFriends] = useState<any[]>([]);
   const [pendingRequests, setPendingRequests] = useState<any[]>([]);
-  // Deze lijst houdt bij wie er in je zijbalk staat, onafhankelijk van je vriendenlijst
   const [chatParticipants, setChatParticipants] = useState<any[]>([]);
 
   const [selectedUser, setSelectedUser] = useState<any>(null);
@@ -31,7 +30,6 @@ const Dashboard = ({ user, onLogout }: any) => {
       const friendsRes = await api.get(`/friends/${user.id}`);
       setFriends(friendsRes.data);
 
-      // Update de chat-deelnemers: voeg vrienden toe aan de lijst als ze er nog niet in staan
       setChatParticipants((prev) => {
         const newList = [...prev];
         friendsRes.data.forEach((f: any) => {
@@ -89,9 +87,7 @@ const Dashboard = ({ user, onLogout }: any) => {
       return;
     try {
       await api.delete(`/friends/${user.id}/${friendId}`);
-      // Verwijder uit de 'friends' lijst (zodat ze uit de Friendlist tab verdwijnen)
       setFriends((prev) => prev.filter((f) => f.id !== friendId));
-      // MAAR: Verwijder ze NIET uit chatParticipants, zodat de chat behouden blijft
       alert("Vriend verwijderd. De chat blijft in je zijbalk staan.");
     } catch (err) {
       console.error("Verwijderen mislukt:", err);
@@ -149,7 +145,9 @@ const Dashboard = ({ user, onLogout }: any) => {
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message.trim() || !selectedUser) return;
+    const isFriend = friends.some((f) => f.id === selectedUser?.id);
+    if (!message.trim() || !selectedUser || !isFriend) return;
+
     try {
       const res = await api.post("/messages", {
         sender_id: user.id,
@@ -162,6 +160,8 @@ const Dashboard = ({ user, onLogout }: any) => {
       console.error("Verzenden mislukt");
     }
   };
+
+  const isFriend = friends.some((f) => f.id === selectedUser?.id);
 
   return (
     <div className="discord-layout">
@@ -180,7 +180,6 @@ const Dashboard = ({ user, onLogout }: any) => {
           <div className="dm-header">
             <span>DIRECT MESSAGES</span>
           </div>
-          {/* Gebruik chatParticipants in de zijbalk */}
           {chatParticipants.map((f: any) => (
             <div
               key={f.id}
@@ -299,8 +298,13 @@ const Dashboard = ({ user, onLogout }: any) => {
             <form className="message-input-form" onSubmit={sendMessage}>
               <div className="input-wrapper">
                 <input
-                  placeholder={`Message @${selectedUser.username}`}
-                  value={message}
+                  disabled={!isFriend}
+                  placeholder={
+                    isFriend
+                      ? `Message @${selectedUser.username}`
+                      : "Je bent geen vriend meer; sturen niet mogelijk."
+                  }
+                  value={isFriend ? message : ""}
                   onChange={(e) => setMessage(e.target.value)}
                 />
               </div>
@@ -308,7 +312,6 @@ const Dashboard = ({ user, onLogout }: any) => {
           </div>
         ) : (
           <div className="friends-container">
-            {/* ... de rest van je render code voor vriendenlijst blijft hetzelfde ... */}
             <header className="top-bar">
               <div className="header-left">
                 <span className="icon">👋</span>
