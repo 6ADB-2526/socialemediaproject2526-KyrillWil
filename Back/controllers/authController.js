@@ -1,42 +1,63 @@
 // controllers/authController.js
 const db = require("../data/db");
-// Tip voor je eindwerk: Gebruik 'bcryptjs' om wachtwoorden te beveiligen!
 const bcrypt = require("bcryptjs");
 
 // === 1. Registreren van een nieuwe gebruiker ===
 exports.registerUser = async (req, res) => {
-  const { username, email, password } = req.body;
+  let { username, email, password } = req.body;
 
-  // Basisvalidatie om te controleren of alle velden zijn ingevuld
+  // Basisvalidatie
   if (!username || !email || !password) {
     return res.status(400).json({ error: "Please fill in all fields." });
   }
 
   try {
-    // Controleren of het e-mailadres al bestaat in de database
-    const [existingUser] = await db.execute(
+    // 1. Controleren of het e-mailadres al bestaat
+    const [existingEmail] = await db.execute(
       "SELECT id FROM users WHERE email = ?",
       [email],
     );
-    if (existingUser.length > 0) {
+    if (existingEmail.length > 0) {
       return res
         .status(400)
         .json({ error: "This email address is already in use." });
     }
 
-    // Wachtwoord veilig versleutelen (hashen) voordat het wordt opgeslagen
+    // 2. LOGICA: Controleren of username bestaat en nummeren
+    let finalUsername = username;
+    let counter = 2;
+
+    // Blijf checken zolang de naam in gebruik is
+    while (true) {
+      const [existingUser] = await db.execute(
+        "SELECT id FROM users WHERE username = ?",
+        [finalUsername],
+      );
+
+      // Als de lengte 0 is, betekent dit dat de naam vrij is
+      if (existingUser.length === 0) {
+        break;
+      }
+
+      // Naam is bezet, maak er "Naam2", "Naam3", enz. van
+      finalUsername = `${username}${counter}`;
+      counter++;
+    }
+
+    // 3. Wachtwoord veilig versleutelen
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Gebruiker opslaan in de 'users' tabel
+    // 4. Gebruiker opslaan met de definitieve (eventueel aangepaste) naam
     await db.execute(
       "INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
-      [username, email, hashedPassword],
+      [finalUsername, email, hashedPassword],
     );
 
-    return res
-      .status(201)
-      .json({ message: "Account successfully created! You can now log in." });
+    return res.status(201).json({
+      message: "Account successfully created!",
+      username: finalUsername, // Stuur de definitieve naam terug
+    });
   } catch (err) {
     console.error("Fout bij registratie:", err);
     return res
@@ -49,13 +70,11 @@ exports.registerUser = async (req, res) => {
 exports.loginUser = async (req, res) => {
   const { email, password } = req.body;
 
-  // Basisvalidatie voor e-mail en wachtwoord
   if (!email || !password) {
     return res.status(400).json({ error: "Fill in the email and password." });
   }
 
   try {
-    // Gebruiker zoeken in de database op basis van e-mail
     const [users] = await db.execute("SELECT * FROM users WHERE email = ?", [
       email,
     ]);
@@ -66,8 +85,6 @@ exports.loginUser = async (req, res) => {
     }
 
     const user = users[0];
-
-    // Het ingevulde wachtwoord vergelijken met de opgeslagen hash
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res
@@ -75,7 +92,6 @@ exports.loginUser = async (req, res) => {
         .json({ error: "Incorrect email address or password." });
     }
 
-    // Succes! Stuur gebruikersinfo terug (wachtwoord blijft in de backend)
     return res.status(200).json({
       message: "Successfully logged in!",
       user: {
