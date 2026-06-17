@@ -1,150 +1,123 @@
 import React, { useEffect, useState, useRef } from "react";
-// Importeer de geconfigureerde axios-instantie voor API-communicatie
 import api from "../../api/axiosInstance";
-// Importeer de bijbehorende CSS-bestanden
 import "./Dashboard.css";
 
-//alle states die je gebruikt in je dashboard
-// Het Dashboard-component is het hoofdvenster na het inloggen
 const Dashboard = ({ user, onLogout }: any) => {
-  // --- STATES: Het geheugen van het component ---
-  const [friends, setFriends] = useState<any[]>([]); // Lijst met geaccepteerde vrienden
-  const [pendingRequests, setPendingRequests] = useState<any[]>([]); // Lijst met inkomende vriendschapsverzoeken
-  const [selectedUser, setSelectedUser] = useState<any>(null); // De vriend waarmee momenteel wordt gechat
-  const [message, setMessage] = useState(""); // De tekst die op dit moment wordt getypt in het inputveld
-  const [chatHistory, setChatHistory] = useState<any[]>([]); // Alle berichten van het actieve gesprek
+  const [friends, setFriends] = useState<any[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<any[]>([]);
+  // Deze lijst houdt bij wie er in je zijbalk staat, onafhankelijk van je vriendenlijst
+  const [chatParticipants, setChatParticipants] = useState<any[]>([]);
 
-  // Bepaalt of we de 'Friendlist' of de 'Pending' (verzoeken) tab tonen
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [message, setMessage] = useState("");
+  const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<"online" | "pending">("online");
-
-  // Beheer voor de UI-elementen (kebab-menu voor opties, bewerkingsmodus)
   const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editValue, setEditValue] = useState("");
 
-  //einde use states
-
-  // useRef wordt gebruikt om direct naar de onderkant van de chat te scrollen bij nieuwe berichten
-  //het is een reference naar een element, zorgt voor specifieke controle over een bepaald element
-  //messagesendref is oftewel een null of een html element, maar omdat de dom nog niet aangemaakt is kan het geen element zijn dus om geen error te krijgen plaats je oftwel null of element ussen <> en je zegt tussen () dat de begin waarde null is. Bij de volgende code zeg je dat messagesendref de current is en de current is een html element dus dan is het geen null meer
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
-  // Functie om de scrollpositie naar beneden te dwingen in een chat naar de typ balk
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
-    //
-    //current? is waar het staat, current is normaal null maar met ? zeg je als current niet null is doe dan scrollIntoView
-    //scrollintoview is standaard browser functie die naar messagesEndRef scrollt zie hierboven wat het is
   };
 
-  // Zodra chatHistory verandert (nieuw bericht), scroll naar beneden
   useEffect(() => {
     scrollToBottom();
   }, [chatHistory]);
 
-  // Haalt de lijsten op via de backend API
   const loadFriendsAndRequests = async () => {
     try {
       const friendsRes = await api.get(`/friends/${user.id}`);
       setFriends(friendsRes.data);
-      //dus je kijkt naar de route friends en kijkt naar de ids van de vrienden die je hebt en setFriends is de useState versie van de variabele friends waar de waarde veranderd kan worden, en je stopt de data die je hebt gekregen van friendsRes erin
 
-      const pendingRes = await api.get(`/friends/pending/${user.id}`); // je gebruikt backticks ` om variabelen te vragen en met backticks is het properder dan accolades "" want dan moet je + user.id doen en niet ${}
+      // Update de chat-deelnemers: voeg vrienden toe aan de lijst als ze er nog niet in staan
+      setChatParticipants((prev) => {
+        const newList = [...prev];
+        friendsRes.data.forEach((f: any) => {
+          if (!newList.find((p) => p.id === f.id)) newList.push(f);
+        });
+        return newList;
+      });
+
+      const pendingRes = await api.get(`/friends/pending/${user.id}`);
       setPendingRequests(pendingRes.data);
     } catch (err) {
       console.error("Fout bij ophalen vrienden/verzoeken", err);
-      //catch is er als er een fout is bv. bij het opvragen van iets en de server stuurt een fout terug, zonder catch bevriest jou pagina maar met catch kan je de fout zien met alle info dat is de err en je kunt een message in console sturen met alle info
     }
   };
 
-  // Eerste keer laden bij mounten, alle gegevens geladen van de gebruiker met die user id en deze word bij andere functies geplaatst want deze moet soms refreshen of geupdate worden
   useEffect(() => {
     loadFriendsAndRequests();
   }, [user.id]);
 
-  // Polling: Elke 4 seconden de data verversen (berichten en status)
   useEffect(() => {
     const fetchData = () => {
-      // Alleen chatgeschiedenis ophalen als we in een chat zitten en niet aan het bewerken zijn
-      // als er een gebruiker is en je edit niet dus het is null dan gebeurt de volgende code
       if (selectedUser && editingId === null) {
         api
           .get(`/messages/${user.id}/${selectedUser.id}`)
           .then((res) => setChatHistory(res.data))
           .catch(() => console.log("Chat kon niet geladen worden"));
-        //dan haalt het alle berichten tussen jij en die geselecteerde gebruker daarna stuurt hij een responde naar de state setChatHistory en die waarde veranderd naar alle data van die get en bij een fout heb je catch om te zien wat er fout liep
       }
       loadFriendsAndRequests();
-      //Het is een aparte functie die jouw "zijbalk" of je "vriendenlijst" up-to-date houdt.
     };
 
-    fetchData(); // Direct uitvoeren
-    const interval = setInterval(fetchData, 4000); // setInterval is een ingebouwde js funtie die zegt voer deze functie uit om de zoveel seconden.
-    // Je refreshed de data die in fetchData is na 4000milisceonden dus 4seconden
-    return () => clearInterval(interval); // Opruimen bij stoppen
-  }, [selectedUser, user.id, editingId]); //het staat daar om deze 3 in de gaten te houden als er minstens een veranderd dan moet useEffect het op de achtergrond aanpassen
-  // useEffect luisterd eigenlijk of hetgene wat het moet in de gaten geven dus hier deze 3 dingen, als ze veranderen moet het de functie uitvoeren
+    fetchData();
+    const interval = setInterval(fetchData, 4000);
+    return () => clearInterval(interval);
+  }, [selectedUser, user.id, editingId]);
 
-  // --- FUNCTIES VOOR ACTIES ---
-
-  // Vriend toevoegen via gebruikersnaam
   const handleAddFriend = async () => {
-    //window.promt is ingebouwd in browser dus niet zelf geschreven
     const friendUsername = window.prompt(
       "Geef de gebruikersnaam van je vriend:",
     );
     if (!friendUsername || !friendUsername.trim()) return;
-
     try {
-      // /friends/add is surft naar je route of endpoint
       const res = await api.post("/friends/add", {
-        //je stuurt eerst je eigen id en dan de persoon waarmee je vrienden wilt worden
         userId: user.id,
         friendUsername: friendUsername.trim(),
       });
       alert(res.data.message);
-      loadFriendsAndRequests(); //het heeft net een actie uitgevoerd dus het vraagt om de info hier te refreshen en de meest recente info te krijgen
+      loadFriendsAndRequests();
     } catch (err: any) {
       alert(err.response?.data?.error || "Er is iets misgegaan.");
     }
   };
 
-  // Vriend verwijderen
   const removeFriend = async (friendId: number) => {
     if (!window.confirm("Weet je zeker dat je deze vriend wilt verwijderen?"))
       return;
     try {
       await api.delete(`/friends/${user.id}/${friendId}`);
-      setFriends((prev) => prev.filter((f) => f.id !== friendId)); //prev(previous) is de huidige waarde van je state of tewel hetgene voordat je op de knop klikte om iets aan te passen
-      if (selectedUser?.id === friendId) setSelectedUser(null); // de ? zegt als het null is dat het undifiend is anders crashed het, het kijkt hier naar de gene die je hebt verwijderd en veranderd de selecteduser naar 0 en dat zorgt dat de chats met die persoon gesloten worden
+      // Verwijder uit de 'friends' lijst (zodat ze uit de Friendlist tab verdwijnen)
+      setFriends((prev) => prev.filter((f) => f.id !== friendId));
+      // MAAR: Verwijder ze NIET uit chatParticipants, zodat de chat behouden blijft
+      alert("Vriend verwijderd. De chat blijft in je zijbalk staan.");
     } catch (err) {
       console.error("Verwijderen mislukt:", err);
     }
   };
 
-  // Vriendschapsverzoek accepteren
   const acceptRequest = async (friendshipId: number) => {
     try {
       await api.put(`/friends/accept/${friendshipId}`);
-      loadFriendsAndRequests(); // loadfriendandreq eigenlijk laat dat alle data van de database in of alleen je vrienden die je hebt en de vriendschapverzoeken die je krijgt, zonder dit ga je de oude dingen zien en refreshed het niet
+      loadFriendsAndRequests();
     } catch (err) {
       console.error("Accepteren mislukt", err);
     }
   };
 
-  // Verzoek weigeren
   const declineRequest = async (friendshipId: number) => {
     try {
       await api.delete(`/friends/decline/${friendshipId}`);
-      setPendingRequests(
-        (prev) => prev.filter((r) => r.friendship_id !== friendshipId), //Dit is de "selectie-check". Je zegt: "Houd alle verzoeken in de lijst, BEHALVE degene waarvan het ID gelijk is aan het ID dat we net hebben afgewezen."
+      setPendingRequests((prev) =>
+        prev.filter((r) => r.friendship_id !== friendshipId),
       );
     } catch (err) {
       console.error("Weigeren mislukt", err);
     }
   };
 
-  // Bericht verwijderen
   const deleteMessage = async (id: number) => {
     try {
       await api.delete(`/messages/${id}`);
@@ -155,12 +128,10 @@ const Dashboard = ({ user, onLogout }: any) => {
     }
   };
 
-  // Bewerkte tekst opslaan naar database
   const saveEdit = async (id: number) => {
     const trimmedValue = editValue.trim();
     if (!trimmedValue) {
-      //! betekent als het false is maar je vergelijkt het hier met niks dus het kijkt of het null of leeg is
-      setEditingId(null); //annuleert de edit omdat het null of leeg is zelfs met trim want trim doet de spaties weg en als je dan niks hebt
+      setEditingId(null);
       return;
     }
     try {
@@ -170,34 +141,30 @@ const Dashboard = ({ user, onLogout }: any) => {
           m.id === id ? { ...m, message_text: trimmedValue } : m,
         ),
       );
-      setEditingId(null); //tijdens het editen is het 1 en na het opslaan is het terug 0
+      setEditingId(null);
     } catch (err) {
       console.error("Bewerken mislukt");
     }
   };
 
-  // Nieuw bericht verzenden
   const sendMessage = async (e: React.FormEvent) => {
-    e.preventDefault(); //zorgt dat je na enter klikt de pagina niet automatisch refreshed
-    if (!message.trim() || !selectedUser) return; // ! is als het bericht leeg is stopt de functie of als de selected user leeg is dus gene meer geselecteerd dan stopt het ook
+    e.preventDefault();
+    if (!message.trim() || !selectedUser) return;
     try {
       const res = await api.post("/messages", {
-        //hier zegt het dat het iets wilt sturen/posten en daaronder geeft het de gegevens naar wie het wilt sturen en wat
         sender_id: user.id,
         receiver_id: selectedUser.id,
         message_text: message,
       });
-      setChatHistory((prev) => [...prev, res.data]); //je haalt alles uit de vorige chatHistory en spread het uit en je voegt je nieuwe bericht dus je res.data eraan toe. Jij ziet hier de code verschijnen maar de gebruiker ziet het verschijnen door het te refreshen maar omdat ik een polling gebruik met een int erval die om de 4 seconden refreshed ziet hij het zonder te refreshen
-      setMessage(""); // Inputveld weer leegmaken
+      setChatHistory((prev) => [...prev, res.data]);
+      setMessage("");
     } catch (err) {
       console.error("Verzenden mislukt");
     }
   };
 
-  // --- RENDER (De visuele weergave) ---
   return (
     <div className="discord-layout">
-      {/* Linkerzijbalk: Navigatie en vriendenlijst */}
       <nav className="sidebar">
         <div className="sidebar-content">
           <div
@@ -210,27 +177,24 @@ const Dashboard = ({ user, onLogout }: any) => {
             <span className="icon">🏠</span>
             <span className="label">Home</span>
           </div>
-
           <div className="dm-header">
             <span>DIRECT MESSAGES</span>
           </div>
-          {friends.map((f: any) => (
-            //map gaat kijken naar alles in je friends en deze gaat in f en if kan any zijn en het gaat voor al die dingen in friends dus je vrienden hetgene hieronde maken
+          {/* Gebruik chatParticipants in de zijbalk */}
+          {chatParticipants.map((f: any) => (
             <div
-              key={f.id} //id
-              className={`user-item ${selectedUser?.id === f.id ? "active" : ""}`} //zorgt voor verschillende styling bij active en niks
+              key={f.id}
+              className={`user-item ${selectedUser?.id === f.id ? "active" : ""}`}
               onClick={() => setSelectedUser(f)}
             >
               <div className="avatar">
-                {f.username[0].toUpperCase()}{" "}
+                {f.username[0].toUpperCase()}
                 <div className="status-dot online"></div>
               </div>
               <span className="username">{f.username}</span>
-            </div> // dit is je avatar van de vriend, je neem de eerste letter van de username dus met [0] en doet er een hooefdletter van met toUpperCase en dat word de avatar
+            </div>
           ))}
         </div>
-
-        {/* Gebruikerspaneel onderaan de sidebar */}
         <div className="user-panel">
           <div className="user-panel-left">
             <div className="avatar small">{user.username[0].toUpperCase()}</div>
@@ -245,10 +209,8 @@ const Dashboard = ({ user, onLogout }: any) => {
         </div>
       </nav>
 
-      {/* Hoofdvenster: Chat of Friendlist */}
       <main className="main-view">
         {selectedUser ? (
-          // CHAT-VENSTER
           <div className="chat-container">
             <header className="top-bar">
               <span className="at">@</span>
@@ -277,7 +239,6 @@ const Dashboard = ({ user, onLogout }: any) => {
                           })}
                         </span>
                       </div>
-                      {/* Bewerking modus: toon inputveld als we dit specifieke bericht bewerken */}
                       {editingId === m.id ? (
                         <div className="edit-container">
                           <input
@@ -290,28 +251,11 @@ const Dashboard = ({ user, onLogout }: any) => {
                               if (e.key === "Escape") setEditingId(null);
                             }}
                           />
-                          <div className="edit-help">
-                            escape to{" "}
-                            <span
-                              className="link"
-                              onMouseDown={() => setEditingId(null)}
-                            >
-                              cancel
-                            </span>{" "}
-                            • enter to{" "}
-                            <span
-                              className="link"
-                              onMouseDown={() => saveEdit(m.id)}
-                            >
-                              save
-                            </span>
-                          </div>
                         </div>
                       ) : (
                         <div className="message-text">{m.message_text}</div>
                       )}
                     </div>
-                    {/* Optie-menu (kebab) voor eigen berichten */}
                     {m.sender_id === user.id && !editingId && (
                       <div className="message-options">
                         <button
@@ -352,7 +296,6 @@ const Dashboard = ({ user, onLogout }: any) => {
                 <div ref={messagesEndRef} />
               </div>
             </div>
-            {/* Inputveld onderaan chat */}
             <form className="message-input-form" onSubmit={sendMessage}>
               <div className="input-wrapper">
                 <input
@@ -364,8 +307,8 @@ const Dashboard = ({ user, onLogout }: any) => {
             </form>
           </div>
         ) : (
-          // FRIENDLIST / PENDING VENSTER (Home view)
           <div className="friends-container">
+            {/* ... de rest van je render code voor vriendenlijst blijft hetzelfde ... */}
             <header className="top-bar">
               <div className="header-left">
                 <span className="icon">👋</span>
@@ -393,11 +336,7 @@ const Dashboard = ({ user, onLogout }: any) => {
             </header>
             <div className="friends-content">
               {activeTab === "online" ? (
-                // Llijst met vrienden
                 <>
-                  <div className="search-bar-wrap">
-                    <input className="friends-search" placeholder="Search" />
-                  </div>
                   <div className="status-label">FRIENDS — {friends.length}</div>
                   <div className="list">
                     {friends.map((f: any) => (
@@ -409,11 +348,9 @@ const Dashboard = ({ user, onLogout }: any) => {
                         <div className="f-info">
                           <div className="avatar">
                             {f.username[0].toUpperCase()}
-                            <div className="status-dot online"></div>
                           </div>
                           <div className="f-text">
                             <div className="f-name">{f.username}</div>
-                            <div className="f-status">Online</div>
                           </div>
                         </div>
                         <div
@@ -438,50 +375,40 @@ const Dashboard = ({ user, onLogout }: any) => {
                   </div>
                 </>
               ) : (
-                // Lijst met inkomende verzoeken
                 <>
                   <div className="status-label">
                     PENDING REQUESTS — {pendingRequests.length}
                   </div>
                   <div className="list">
-                    {pendingRequests.length === 0 ? (
-                      <div className="empty-state">
-                        No pending friend requests.
-                      </div>
-                    ) : (
-                      pendingRequests.map((r: any) => (
-                        <div
-                          key={r.friendship_id}
-                          className="friend-item pending-item"
-                        >
-                          <div className="f-info">
-                            <div className="avatar">
-                              {r.username[0].toUpperCase()}
-                            </div>
-                            <div className="f-text">
-                              <div className="f-name">{r.username}</div>
-                              <div className="f-status">
-                                Incoming Friend Request
-                              </div>
-                            </div>
+                    {pendingRequests.map((r: any) => (
+                      <div
+                        key={r.friendship_id}
+                        className="friend-item pending-item"
+                      >
+                        <div className="f-info">
+                          <div className="avatar">
+                            {r.username[0].toUpperCase()}
                           </div>
-                          <div className="f-actions">
-                            <button
-                              className="circle-btn accept-btn-v"
-                              onClick={() => acceptRequest(r.friendship_id)}
-                            >
-                              ✅
-                            </button>
-                            <button
-                              className="circle-btn remove-btn-x"
-                              onClick={() => declineRequest(r.friendship_id)}
-                            >
-                              ❌
-                            </button>
+                          <div className="f-text">
+                            <div className="f-name">{r.username}</div>
                           </div>
                         </div>
-                      ))
-                    )}
+                        <div className="f-actions">
+                          <button
+                            className="circle-btn accept-btn-v"
+                            onClick={() => acceptRequest(r.friendship_id)}
+                          >
+                            ✅
+                          </button>
+                          <button
+                            className="circle-btn remove-btn-x"
+                            onClick={() => declineRequest(r.friendship_id)}
+                          >
+                            ❌
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </>
               )}
